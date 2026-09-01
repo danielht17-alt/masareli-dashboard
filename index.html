@@ -545,24 +545,44 @@ async function cargarDatos(){
     const minutos=Number(document.getElementById("rango").value);
     const desde=new Date(Date.now()-minutos*60000).toISOString();
 
-    const endpoint=
-      `${SUPABASE_URL}/rest/v1/Lecturas`+
-      `?select=created_at,temp_pt100,temp_sht85,humedad,diferencia_temp,dispositivo`+
-      `&created_at=gte.${encodeURIComponent(desde)}`+
-      `&order=created_at.desc&limit=1000`;
+   const pageSize = 1000;
+let offset = 0;
+let datos = [];
 
-    const r=await fetch(endpoint,{
-      headers:{
-        apikey:SUPABASE_KEY
-      }
-    });
+while (true) {
 
-    if(!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+  const endpoint =
+    `${SUPABASE_URL}/rest/v1/Lecturas` +
+    `?select=created_at,temp_pt100,temp_sht85,humedad,diferencia_temp,dispositivo` +
+    `&created_at=gte.${encodeURIComponent(desde)}` +
+    `&order=created_at.asc` +
+    `&limit=${pageSize}` +
+    `&offset=${offset}`;
 
-    const datos=await r.json();
-    if(!datos.length) throw new Error("No hay registros en el período seleccionado.");
+  const r = await fetch(endpoint,{
+    headers:{
+      apikey:SUPABASE_KEY
+    }
+  });
 
-    datos.reverse();
+  if(!r.ok) {
+    throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+  }
+
+  const pagina = await r.json();
+
+  datos = datos.concat(pagina);
+
+  if(pagina.length < pageSize) {
+    break;
+  }
+
+  offset += pageSize;
+}
+
+if(!datos.length) {
+  throw new Error("No hay registros en el período seleccionado.");
+}
 
     actualizar(datos);
 
