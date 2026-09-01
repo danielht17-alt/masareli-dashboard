@@ -549,7 +549,7 @@ async function cargarDatos(){
       `${SUPABASE_URL}/rest/v1/Lecturas`+
       `?select=created_at,temp_pt100,temp_sht85,humedad,diferencia_temp,dispositivo`+
       `&created_at=gte.${encodeURIComponent(desde)}`+
-      `&order=created_at.asc&limit=5000`;
+      `&order=created_at.desc&limit=1000`;
 
     const r=await fetch(endpoint,{
       headers:{
@@ -561,6 +561,8 @@ async function cargarDatos(){
 
     const datos=await r.json();
     if(!datos.length) throw new Error("No hay registros en el período seleccionado.");
+
+    datos.reverse();
 
     actualizar(datos);
 
