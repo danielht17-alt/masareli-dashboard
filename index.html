@@ -329,6 +329,7 @@ padding:16px}}
         <option value="1440" selected>24 horas</option>
         <option value="10080">7 días</option>
       </select>
+      <span id="estadoCarga" style="margin-left:10px;color:var(--muted);font-size:12px;"></span>
     </div>
   </div>
 </header>
@@ -548,6 +549,9 @@ async function cargarDatos(){
    const pageSize = 1000;
 let offset = 0;
 let datos = [];
+  
+    const estadoCarga = document.getElementById("estadoCarga");
+estadoCarga.textContent = "Cargando histórico... 0 registros";
 
 while (true) {
 
@@ -573,6 +577,8 @@ while (true) {
 
   datos = datos.concat(pagina);
 
+  estadoCarga.textContent = `Cargando histórico... ${datos.length.toLocaleString()} registros`;
+  
   if(pagina.length < pageSize) {
     break;
   }
@@ -586,8 +592,11 @@ if(!datos.length) {
 
     actualizar(datos);
 
+    estadoCarga.textContent = `${datos.length.toLocaleString()} registros cargados`;
+
   }catch(err){
     console.error(err);
+    estadoCarga.textContent = "Error al cargar histórico";
     errorBox.textContent="No fue posible cargar los datos desde Supabase. Detalle: "+err.message;
     errorBox.style.display="block";
     document.getElementById("dot").className="dot offline";
