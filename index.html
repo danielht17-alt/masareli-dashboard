@@ -6,6 +6,7 @@
 <title>Monitoreo Cámara Fría V2.1</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>  
 <style>
 :root {
   --bg: #07111f;
@@ -550,6 +551,23 @@ async function cargarDatos(){
 
     const minutos=Number(document.getElementById("rango").value);
     const desde=new Date(Date.now()-minutos*60000).toISOString();
+    const endpointEventos =
+  `${SUPABASE_URL}/rest/v1/Eventos` +
+  `?select=fecha_evento,tipo_evento,descripcion` +
+  `&fecha_evento=gte.${encodeURIComponent(desde)}` +
+  `&order=fecha_evento.asc`;
+
+const rEventos = await fetch(endpointEventos,{
+  headers:{
+    apikey:SUPABASE_KEY
+  }
+});
+
+if(!rEventos.ok) {
+  throw new Error(`HTTP Eventos ${rEventos.status}: ${await rEventos.text()}`);
+}
+
+const eventos = await rEventos.json();
 
    const pageSize = 1000;
 let offset = 0;
@@ -595,7 +613,7 @@ if(!datos.length) {
   throw new Error("No hay registros en el período seleccionado.");
 }
 
-    actualizar(datos);
+    actualizar(datos,eventos);
 
     estadoCarga.textContent = `${datos.length.toLocaleString()} registros cargados`;
 
@@ -609,7 +627,7 @@ if(!datos.length) {
   }
 }
 
-function actualizar(datos){
+function actualizar(datos,eventos){
   const u=datos[datos.length-1];
   const pt=Number(u.temp_pt100);
   const sht=Number(u.temp_sht85);
@@ -692,7 +710,26 @@ for (let i = 0; i < datos.length; i++) {
   humedadConHuecos.push(Number(datos[i].humedad));
   margenConHuecos.push(margins[i]);
 } 
-  
+  const anotacionesEventos = {};
+
+eventos.forEach((evento, i) => {
+  anotacionesEventos["evento" + i] = {
+    type: "line",
+    xMin: evento.fecha_evento,
+    xMax: evento.fecha_evento,
+    borderWidth: 2,
+    borderDash: [6, 6],
+    label: {
+      display: true,
+      content: evento.tipo_evento,
+      position: "start"
+    }
+  };
+});
+
+tempChart.options.plugins.annotation = {
+  annotations: anotacionesEventos
+}; 
   tempChart.data.labels=fechasConHuecos;
   tempChart.data.datasets[0].data=pt100ConHuecos;
   tempChart.data.datasets[1].data=sht85ConHuecos;
