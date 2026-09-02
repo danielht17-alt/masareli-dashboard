@@ -658,20 +658,47 @@ function actualizar(datos){
   const dps=datos.map(x=>puntoRocio(Number(x.temp_sht85),Number(x.humedad)));
   const margins=datos.map((x,i)=>Number(x.temp_pt100)-dps[i]);
 
-  tempChart.data.labels=labels;
-  tempChart.data.datasets[0].data=datos.map(x=>x.temp_pt100);
-  tempChart.data.datasets[1].data=datos.map(x=>x.temp_sht85);
-  tempChart.data.datasets[2].data=datos.map(()=>TEMP_OBJ);
+  const labelsConHuecos = [];
+const pt100ConHuecos = [];
+const sht85ConHuecos = [];
+const humedadConHuecos = [];
+const margenConHuecos = [];
+
+for (let i = 0; i < datos.length; i++) {
+  if (i > 0) {
+    const tActual = new Date(datos[i].created_at).getTime();
+    const tAnterior = new Date(datos[i - 1].created_at).getTime();
+
+    if ((tActual - tAnterior) > 3 * 60 * 1000) {
+      labelsConHuecos.push("");
+      pt100ConHuecos.push(null);
+      sht85ConHuecos.push(null);
+      humedadConHuecos.push(null);
+      margenConHuecos.push(null);
+    }
+  }
+
+  labelsConHuecos.push(labels[i]);
+  pt100ConHuecos.push(Number(datos[i].temp_pt100));
+  sht85ConHuecos.push(Number(datos[i].temp_sht85));
+  humedadConHuecos.push(Number(datos[i].humedad));
+  margenConHuecos.push(margins[i]);
+} 
+  
+  tempChart.data.labels=labelsConHuecos;
+  tempChart.data.datasets[0].data=pt100ConHuecos;
+  tempChart.data.datasets[1].data=sht85ConHuecos;
+  tempChart.data.datasets[2].data=labelsConHuecos.map(()=>TEMP_OBJ);
   tempChart.update();
 
-  hrChart.data.labels=labels;
-  hrChart.data.datasets[0].data=datos.map(x=>x.humedad);
-  hrChart.data.datasets[1].data=datos.map(()=>HR_OBJ);
+  hrChart.data.labels=labelsConHuecos;
+  hrChart.data.datasets[0].data=humedadConHuecos;
+  hrChart.data.datasets[1].data=labelsConHuecos.map(()=>HR_OBJ);
   hrChart.update();
 
-  condChart.data.labels=labels;
-  condChart.data.datasets[0].data=margins;
-  condChart.data.datasets[1].data=datos.map(()=>0);
+ condChart.data.labels=labelsConHuecos;
+ condChart.data.datasets[0].data=margenConHuecos;
+ condChart.data.datasets[1].data=labelsConHuecos.map(()=>0);
   condChart.update();
 }
 
