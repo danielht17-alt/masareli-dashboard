@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monitoreo Cámara Fría V2.1</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <style>
 :root {
   --bg: #07111f;
@@ -477,10 +478,14 @@ function baseOptions(yTitle){
     },
     scales:{
       x:{
-        grid:{display:false},
-        ticks:{maxTicksLimit:10,color:"#7f93a8"},
-        title:{display:true,text:"Fecha / hora",color:"#7f93a8"}
-      },
+  type:"time",
+  time:{
+    tooltipFormat:"dd/MM/yyyy HH:mm"
+  },
+  grid:{display:false},
+  ticks:{maxTicksLimit:10,color:"#7f93a8"},
+  title:{display:true,text:"Fecha / hora",color:"#7f93a8"}
+}
       y:{
         grid:{color:"rgba(255,255,255,.055)"},
         ticks:{color:"#7f93a8"},
@@ -659,6 +664,7 @@ function actualizar(datos){
   const margins=datos.map((x,i)=>Number(x.temp_pt100)-dps[i]);
 
   const labelsConHuecos = [];
+  const fechasConHuecos = [];
 const pt100ConHuecos = [];
 const sht85ConHuecos = [];
 const humedadConHuecos = [];
@@ -670,6 +676,7 @@ for (let i = 0; i < datos.length; i++) {
     const tAnterior = new Date(datos[i - 1].created_at).getTime();
 
     if ((tActual - tAnterior) > 3 * 60 * 1000) {
+      fechasConHuecos.push(new Date((tAnterior + tActual) / 2).toISOString());
       labelsConHuecos.push("");
       pt100ConHuecos.push(null);
       sht85ConHuecos.push(null);
@@ -678,6 +685,7 @@ for (let i = 0; i < datos.length; i++) {
     }
   }
 
+  fechasConHuecos.push(datos[i].created_at);
   labelsConHuecos.push(labels[i]);
   pt100ConHuecos.push(Number(datos[i].temp_pt100));
   sht85ConHuecos.push(Number(datos[i].temp_sht85));
@@ -685,20 +693,20 @@ for (let i = 0; i < datos.length; i++) {
   margenConHuecos.push(margins[i]);
 } 
   
-  tempChart.data.labels=labelsConHuecos;
+  tempChart.data.labels=fechasConHuecos;
   tempChart.data.datasets[0].data=pt100ConHuecos;
   tempChart.data.datasets[1].data=sht85ConHuecos;
-  tempChart.data.datasets[2].data=labelsConHuecos.map(()=>TEMP_OBJ);
+  tempChart.data.datasets[2].data=fechasConHuecos.map(()=>TEMP_OBJ);
   tempChart.update();
 
-  hrChart.data.labels=labelsConHuecos;
+  hrChart.data.labels=fechasConHuecos;
   hrChart.data.datasets[0].data=humedadConHuecos;
-  hrChart.data.datasets[1].data=labelsConHuecos.map(()=>HR_OBJ);
+  hrChart.data.datasets[1].data=fechasConHuecos.map(()=>HR_OBJ);
   hrChart.update();
 
- condChart.data.labels=labelsConHuecos;
+ condChart.data.labels=fechasConHuecos;
  condChart.data.datasets[0].data=margenConHuecos;
- condChart.data.datasets[1].data=labelsConHuecos.map(()=>0);
+ condChart.data.datasets[1].data=fechasConHuecos.map(()=>0);
   condChart.update();
 }
 
