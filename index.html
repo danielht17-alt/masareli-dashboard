@@ -730,6 +730,13 @@ eventos.forEach((evento, i) => {
 tempChart.options.plugins.annotation = {
   annotations: anotacionesEventos
 }; 
+  hrChart.options.plugins.annotation = {
+  annotations: anotacionesEventos
+};
+
+condChart.options.plugins.annotation = {
+  annotations: anotacionesEventos
+};
   tempChart.data.labels=fechasConHuecos;
   tempChart.data.datasets[0].data=pt100ConHuecos;
   tempChart.data.datasets[1].data=sht85ConHuecos;
